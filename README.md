@@ -40,6 +40,9 @@ Para rodar este projeto na sua máquina, você precisa ter instalado:
 5. **Acesse o Sistema:**  
    Abra o seu navegador e acesse a URL que aparecerá no Console (ex: `https://localhost:7145`).
 
+6. **Passo Inicial (Administração):**
+   Ao iniciar o sistema pela primeira vez, o primeiro passo deve ser acessar o perfil de administrador. Faça o login com o usuário e senha de administrador e proceda com a criação dos usuários iniciais que utilizarão o sistema.
+
 ---
 
 ## Tecnologias Utilizadas
