@@ -1,0 +1,9 @@
+Cadastro de Setores
+Cadastro de Prioridades (ex: Baixa, Média, Alta) com tempo estimado em horas
+Cadastro do Chamado, vinculando ao Setor e à Prioridade (status inicial: "Aberto")
+Atendimento (Check-in): registrar data e hora de início
+* Não pode iniciar um chamado já finalizado ou cancelado
+Finalização (Check-out): registrar data/hora de término e uma breve solução
+* Só pode finalizar chamados que foram iniciados
+Listagem de chamados com Setor, Prioridade, Status atual e Tempo Total de Atendimento
+Destacar chamados que ultrapassarem o tempo estimado da prioridade

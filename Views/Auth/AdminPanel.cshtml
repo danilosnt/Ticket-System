@@ -1,0 +1,231 @@
+@{
+    ViewData["Title"] = "Painel Admin";
+}
+
+<div class="admin-layout">
+    <div style="max-width:900px; margin:0 auto;">
+        <div class="admin-header">
+            <div>
+                <h1 class="page-title"><i class="fas fa-shield-alt" style="color:var(--danger);"></i> Painel Admin</h1>
+                <p class="page-subtitle" style="margin-bottom:0;">Gerencie os usuários do sistema</p>
+            </div>
+            <a href="/" class="back-link" onclick="doLogout(event)">
+                <i class="fas fa-sign-out-alt"></i> Sair
+            </a>
+        </div>
+
+        <!-- Add User Form -->
+        <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:28px; margin-bottom:28px;">
+            <h3 style="font-size:15px; font-weight:700; margin-bottom:18px;">
+                <i class="fas fa-user-plus" style="color:var(--accent);"></i> Adicionar Novo Usuário
+            </h3>
+            <form id="addUserForm" onsubmit="return addUser(event)">
+                <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;">
+                    <div class="form-group" style="flex:1; min-width:150px; margin-bottom:0;">
+                        <label>Nome de Exibição</label>
+                        <div class="input-wrap">
+                            <input type="text" id="newDisplayName" placeholder="Ex: João Silva" required style="padding-left:14px;" />
+                        </div>
+                    </div>
+                    <div class="form-group" style="flex:1; min-width:150px; margin-bottom:0;">
+                        <label>Usuário</label>
+                        <div class="input-wrap">
+                            <input type="text" id="newUsername" placeholder="Ex: joao.silva" required style="padding-left:14px;" />
+                        </div>
+                    </div>
+                    <div class="form-group" style="flex:1; min-width:150px; margin-bottom:0;">
+                        <label>Senha</label>
+                        <div class="input-wrap">
+                            <input type="password" id="newPassword" placeholder="Senha inicial" required style="padding-left:14px;" />
+                        </div>
+                    </div>
+                </div>
+                <div style="display:flex; gap:12px; align-items:flex-end; margin-top:14px;">
+                    <div class="form-group" style="flex:1; min-width:200px; margin-bottom:0;">
+                        <label>Perfil</label>
+                        <select id="newRole" required>
+                            <option value="Usuario">👤 Usuário — Cria e visualiza seus chamados</option>
+                            <option value="Tecnico">🔧 Técnico — Visualiza todos e gerencia chamados</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-glow" style="width:auto; padding:12px 24px; height:fit-content;">
+                        <i class="fas fa-plus"></i> Adicionar
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Users List -->
+        <div class="section-header">
+            <h2><i class="fas fa-users" style="color:var(--accent); margin-right:8px;"></i> Usuários Cadastrados</h2>
+            <span id="userCount" style="color:var(--text-muted); font-size:13px;"></span>
+        </div>
+        <div id="usersList"></div>
+    </div>
+</div>
+
+<!-- Change Role Modal -->
+<div class="modal fade" id="changeRoleModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-user-cog" style="color:var(--accent); margin-right:8px;"></i>Alterar Perfil</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="changeRoleUserId" />
+                <p style="font-size:13px; color:var(--text-secondary); margin-bottom:12px;">Selecione o novo perfil para <strong id="changeRoleUserName"></strong>:</p>
+                <div class="form-group" style="margin-bottom:0;">
+                    <select id="changeRoleSelect">
+                        <option value="Usuario">👤 Usuário</option>
+                        <option value="Tecnico">🔧 Técnico</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm" style="background:transparent; color:var(--text-muted); border:1px solid var(--border-color); padding:8px 18px; border-radius:8px;" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn-glow" style="width:auto; padding:10px 24px;" onclick="confirmChangeRole()">
+                    <i class="fas fa-check"></i> Salvar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+@section Scripts {
+<script>
+    $(document).ready(function() {
+        checkAdmin();
+        loadUsers();
+    });
+
+    function checkAdmin() {
+        $.get('/api/auth/me').done(function(u) {
+            if (u.role !== 'Admin') {
+                window.location.href = '/';
+            }
+        }).fail(function() {
+            window.location.href = '/admin';
+        });
+    }
+
+    function getRoleBadge(role) {
+        if (role === 'Admin') return '<span style="background:rgba(239,68,68,.12); color:#f87171; padding:3px 10px; border-radius:12px; font-size:10px; font-weight:600;">ADMIN</span>';
+        if (role === 'Tecnico') return '<span style="background:rgba(59,130,246,.12); color:#60a5fa; padding:3px 10px; border-radius:12px; font-size:10px; font-weight:600;">TÉCNICO</span>';
+        return '<span style="background:rgba(16,185,129,.12); color:#34d399; padding:3px 10px; border-radius:12px; font-size:10px; font-weight:600;">USUÁRIO</span>';
+    }
+
+    function getActiveBadge(isActive) {
+        if (isActive) return '<span style="background:rgba(16,185,129,.12); color:#34d399; padding:3px 8px; border-radius:10px; font-size:10px; font-weight:600;">ATIVO</span>';
+        return '<span style="background:rgba(239,68,68,.12); color:#f87171; padding:3px 8px; border-radius:10px; font-size:10px; font-weight:600;">INATIVO</span>';
+    }
+
+    function loadUsers() {
+        $.get('/api/auth/users').done(function(users) {
+            var container = $('#usersList');
+            container.empty();
+            $('#userCount').text(users.length + ' usuário(s)');
+
+            users.forEach(function(u, i) {
+                var initials = u.displayName.split(' ').map(function(n) { return n[0]; }).join('').substring(0,2).toUpperCase();
+                var isAdmin = u.role === 'Admin';
+
+                var actionBtns = '';
+                if (!isAdmin) {
+                    var toggleIcon = u.isActive ? 'fa-toggle-on' : 'fa-toggle-off';
+                    var toggleColor = u.isActive ? 'var(--success)' : 'var(--text-muted)';
+                    var toggleTitle = u.isActive ? 'Desativar' : 'Ativar';
+
+                    actionBtns =
+                        '<div style="display:flex; gap:6px; align-items:center;">' +
+                            '<button onclick="toggleActive(\'' + u.id + '\')" title="' + toggleTitle + '" style="background:transparent; border:1px solid var(--border-color); color:' + toggleColor + '; padding:6px 10px; border-radius:8px; cursor:pointer; font-size:14px; transition:all .2s;"><i class="fas ' + toggleIcon + '"></i></button>' +
+                            '<button onclick="openChangeRole(\'' + u.id + '\', \'' + u.displayName + '\', \'' + u.role + '\')" title="Alterar Perfil" style="background:transparent; border:1px solid var(--border-color); color:var(--accent); padding:6px 10px; border-radius:8px; cursor:pointer; font-size:13px; transition:all .2s;"><i class="fas fa-user-cog"></i></button>' +
+                            '<button class="delete-btn" onclick="deleteUser(\'' + u.id + '\', \'' + u.displayName + '\')"><i class="fas fa-trash-alt"></i> Remover</button>' +
+                        '</div>';
+                } else {
+                    actionBtns = '<span style="font-size:11px; color:var(--text-muted); font-style:italic;">Admin protegido</span>';
+                }
+
+                container.append(
+                    '<div class="user-card" style="animation-delay:' + (i * .05) + 's; opacity:' + (u.isActive ? '1' : '0.5') + ';">' +
+                        '<div class="user-meta">' +
+                            '<div class="user-avatar">' + initials + '</div>' +
+                            '<div>' +
+                                '<div class="user-name">' + u.displayName + ' ' + getRoleBadge(u.role) + ' ' + getActiveBadge(u.isActive) + '</div>' +
+                                '<div class="user-username">@@' + u.username + '</div>' +
+                            '</div>' +
+                        '</div>' +
+                        actionBtns +
+                    '</div>'
+                );
+            });
+        }).fail(function() {
+            showToast('Erro ao carregar usuários', 'error');
+        });
+    }
+
+    function addUser(e) {
+        e.preventDefault();
+        $.ajax({
+            url: '/api/auth/users', type: 'POST', contentType: 'application/json',
+            data: JSON.stringify({
+                displayName: $('#newDisplayName').val(),
+                username: $('#newUsername').val(),
+                password: $('#newPassword').val(),
+                role: $('#newRole').val()
+            }),
+            success: function() { showToast('Usuário criado!', 'success'); $('#addUserForm')[0].reset(); loadUsers(); },
+            error: function(xhr) { showToast(xhr.responseJSON ? xhr.responseJSON.erro : 'Erro ao criar', 'error'); }
+        });
+        return false;
+    }
+
+    function toggleActive(id) {
+        $.ajax({
+            url: '/api/auth/users/' + id + '/toggle-active', type: 'PUT',
+            success: function(res) { showToast(res.message, 'success'); loadUsers(); },
+            error: function(xhr) { showToast(xhr.responseJSON ? xhr.responseJSON.erro : 'Erro', 'error'); }
+        });
+    }
+
+    function openChangeRole(id, name, currentRole) {
+        $('#changeRoleUserId').val(id);
+        $('#changeRoleUserName').text(name);
+        $('#changeRoleSelect').val(currentRole);
+        $('#changeRoleModal').modal('show');
+    }
+
+    function confirmChangeRole() {
+        var id = $('#changeRoleUserId').val();
+        var role = $('#changeRoleSelect').val();
+        $.ajax({
+            url: '/api/auth/users/' + id + '/role', type: 'PUT', contentType: 'application/json',
+            data: JSON.stringify({ role: role }),
+            success: function(res) { $('#changeRoleModal').modal('hide'); showToast(res.message, 'success'); loadUsers(); },
+            error: function(xhr) { showToast(xhr.responseJSON ? xhr.responseJSON.erro : 'Erro', 'error'); }
+        });
+    }
+
+    function deleteUser(id, name) {
+        if (!confirm('Tem certeza que deseja remover "' + name + '"?')) return;
+        $.ajax({
+            url: '/api/auth/users/' + id, type: 'DELETE',
+            success: function() { showToast('Usuário removido!', 'success'); loadUsers(); },
+            error: function(xhr) { showToast(xhr.responseJSON ? xhr.responseJSON.erro : 'Erro', 'error'); }
+        });
+    }
+
+    function doLogout(e) {
+        e.preventDefault();
+        $.post('/api/auth/logout').always(function() { window.location.href = '/admin'; });
+    }
+
+    function showToast(msg, type) {
+        var toast = $('<div class="toast-msg ' + type + '"><i class="fas fa-' + (type === 'success' ? 'check-circle' : 'exclamation-circle') + '"></i> ' + msg + '</div>');
+        $('#toastContainer').append(toast);
+        setTimeout(function() { toast.fadeOut(300, function() { $(this).remove(); }); }, 3500);
+    }
+</script>
+}

@@ -1,0 +1,82 @@
+@{
+    ViewData["Title"] = "Admin Login";
+}
+
+<div class="login-wrapper">
+    <div class="login-card">
+        <div class="logo">
+            <i class="fas fa-shield-alt"></i>
+            <h1>Ticket System</h1>
+            <p>Acesso restrito ao administrador</p>
+            <span class="admin-badge"><i class="fas fa-lock"></i> Painel Admin</span>
+        </div>
+
+        <div id="loginError" style="display:none; background:rgba(239,68,68,.12); color:#f87171; padding:12px 16px; border-radius:10px; font-size:13px; margin-bottom:20px; text-align:center;"></div>
+
+        <form id="adminLoginForm" onsubmit="return handleAdminLogin(event)">
+            <div class="form-group">
+                <label>Usuário Admin</label>
+                <div class="input-wrap">
+                    <input type="text" id="username" placeholder="admin" required autocomplete="username" />
+                    <i class="fas fa-user-shield"></i>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Senha</label>
+                <div class="input-wrap">
+                    <input type="password" id="password" placeholder="Senha do administrador" required autocomplete="current-password" />
+                    <i class="fas fa-key"></i>
+                </div>
+            </div>
+            <button type="submit" class="btn-glow btn-danger-glow" id="adminLoginBtn">
+                <i class="fas fa-sign-in-alt"></i> Entrar como Admin
+            </button>
+        </form>
+
+        <div style="text-align:center; margin-top:20px;">
+            <a href="/" style="color:var(--text-muted); font-size:12px; text-decoration:none;">
+                <i class="fas fa-arrow-left"></i> Voltar ao login
+            </a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function handleAdminLogin(e) {
+        e.preventDefault();
+        var btn = document.getElementById('adminLoginBtn');
+        btn.innerHTML = '<span class="spinner"></span> Verificando...';
+        btn.disabled = true;
+        $('#loginError').hide();
+
+        $.ajax({
+            url: '/api/auth/login',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                username: $('#username').val(),
+                password: $('#password').val()
+            }),
+            success: function(data) {
+                if (data.role !== 'Admin') {
+                    $('#loginError').text('Acesso negado. Apenas administradores.').fadeIn();
+                    btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Entrar como Admin';
+                    btn.disabled = false;
+                    // Logout the non-admin session
+                    $.post('/api/auth/logout');
+                    return;
+                }
+                window.location.href = '/admin/panel';
+            },
+            error: function(xhr) {
+                var msg = xhr.responseJSON ? xhr.responseJSON.erro : 'Erro ao fazer login';
+                $('#loginError').text(msg).fadeIn();
+                btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Entrar como Admin';
+                btn.disabled = false;
+            }
+        });
+        return false;
+    }
+</script>
+}

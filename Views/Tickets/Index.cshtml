@@ -1,0 +1,410 @@
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="dashboard">
+    <aside class="sidebar">
+        <div class="brand">
+            <i class="fas fa-ticket-alt"></i>
+            <h2>Ticket System</h2>
+        </div>
+        <nav>
+            <a href="#" class="active"><i class="fas fa-th-large"></i> Dashboard</a>
+            <a href="#" onclick="filterBy('Todos')"><i class="fas fa-list"></i> Todos os Chamados</a>
+            <a href="#" onclick="filterBy('Aberto')"><i class="fas fa-folder-open"></i> Abertos</a>
+            <a href="#" onclick="filterBy('EmAndamento')"><i class="fas fa-spinner"></i> Em Andamento</a>
+            <a href="#" onclick="filterBy('Finalizado')"><i class="fas fa-check-circle"></i> Finalizados</a>
+        </nav>
+        <div class="user-info">
+            <div class="avatar" id="userAvatar">U</div>
+            <div class="details">
+                <div class="name" id="userName">Carregando...</div>
+                <div class="role" id="userRole">Usuário</div>
+            </div>
+            <button class="logout-btn" onclick="doLogout()" title="Sair">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+    </aside>
+
+    <div class="main-content">
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-subtitle" id="pageSubtitle">Visão geral dos chamados do sistema</p>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon blue"><i class="fas fa-ticket-alt"></i></div>
+                <div class="stat-value" id="statTotal">0</div>
+                <div class="stat-label">Total</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon yellow"><i class="fas fa-folder-open"></i></div>
+                <div class="stat-value" id="statAbertos">0</div>
+                <div class="stat-label">Abertos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green"><i class="fas fa-spinner"></i></div>
+                <div class="stat-value" id="statEmAndamento">0</div>
+                <div class="stat-label">Em Andamento</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon red"><i class="fas fa-exclamation-triangle"></i></div>
+                <div class="stat-value" id="statSla">0</div>
+                <div class="stat-label">SLA Estourado</div>
+            </div>
+        </div>
+
+        <div class="section-header">
+            <h2 id="sectionTitle">Todos os Chamados</h2>
+            <button class="btn-glow" style="width:auto; padding:10px 20px;" data-bs-toggle="modal" data-bs-target="#createTicketModal">
+                <i class="fas fa-plus"></i> Novo Chamado
+            </button>
+        </div>
+
+        <div class="filter-bar">
+            <button class="filter-chip active" onclick="filterBy('Todos', this)">Todos</button>
+            <button class="filter-chip" onclick="filterBy('Aberto', this)">Abertos</button>
+            <button class="filter-chip" onclick="filterBy('EmAndamento', this)">Em Andamento</button>
+            <button class="filter-chip" onclick="filterBy('Finalizado', this)">Finalizados</button>
+            <button class="filter-chip" onclick="filterBy('Cancelado', this)">Cancelados</button>
+        </div>
+
+        <div class="table-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Título</th>
+                        <th>Setor</th>
+                        <th>Prioridade</th>
+                        <th>Status</th>
+                        <th>Criado Por</th>
+                        <th>Tempo Total</th>
+                        <th>Finalizado Em</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="ticketsList"></tbody>
+            </table>
+            <div class="empty-state" id="emptyState" style="display:none;">
+                <i class="fas fa-inbox"></i>
+                <p>Nenhum chamado encontrado</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Ticket Modal -->
+<div class="modal fade" id="createTicketModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus-circle" style="color:var(--accent); margin-right:8px;"></i>Novo Chamado</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createTicketForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label>Título</label>
+                        <div class="input-wrap">
+                            <input type="text" id="titleInput" placeholder="Ex: Computador não liga" required />
+                            <i class="fas fa-heading"></i>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Descrição</label>
+                        <textarea id="descriptionInput" rows="3" placeholder="Descreva o problema detalhadamente..."></textarea>
+                    </div>
+                    <div style="display:flex; gap:12px;">
+                        <div class="form-group" style="flex:1;">
+                            <label>Setor</label>
+                            <select id="sectorInput" required>
+                                <option value="">Selecione...</option>
+                                <option value="TI">TI</option>
+                                <option value="RH">RH</option>
+                                <option value="Financeiro">Financeiro</option>
+                                <option value="Comercial">Comercial</option>
+                                <option value="Suporte">Suporte</option>
+                                <option value="Infraestrutura">Infraestrutura</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex:1;">
+                            <label>Prioridade</label>
+                            <select id="priorityInput" required>
+                                <option value="Baixa">🟢 Baixa (24h)</option>
+                                <option value="Média">🟡 Média (8h)</option>
+                                <option value="Alta">🔴 Alta (4h)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-image" style="margin-right:4px;"></i> Anexar Imagem (opcional)</label>
+                        <input type="file" id="ticketImageInput" accept="image/*" style="width:100%; padding:10px; background:var(--bg-input); border:1px solid var(--border-color); border-radius:var(--radius); color:var(--text-primary); font-size:13px;" />
+                        <div id="ticketImagePreview" style="margin-top:8px;"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm" style="background:transparent; color:var(--text-muted); border:1px solid var(--border-color); padding:8px 18px; border-radius:8px;" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn-glow" style="width:auto; padding:10px 24px;" onclick="createTicket()">
+                    <i class="fas fa-check"></i> Criar Chamado
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Finish Ticket Modal -->
+<div class="modal fade" id="finishTicketModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-check-circle" style="color:var(--success); margin-right:8px;"></i>Finalizar Chamado</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="finishTicketId">
+                <div class="form-group">
+                    <label>Descrição da Solução</label>
+                    <textarea id="solutionInput" rows="4" placeholder="Descreva detalhadamente a solução aplicada..." required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm" style="background:transparent; color:var(--text-muted); border:1px solid var(--border-color); padding:8px 18px; border-radius:8px;" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn-glow btn-success-glow" style="width:auto; padding:10px 24px;" onclick="finishTicket()">
+                    <i class="fas fa-check"></i> Finalizar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Ticket Modal -->
+<div class="modal fade" id="cancelTicketModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-times-circle" style="color:var(--danger); margin-right:8px;"></i>Encerrar Chamado</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="cancelTicketId">
+                <div class="form-group">
+                    <label>Motivo do Encerramento</label>
+                    <textarea id="cancelReasonInput" rows="3" placeholder="Ex: Não preciso mais do atendimento, problema foi resolvido..." required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm" style="background:transparent; color:var(--text-muted); border:1px solid var(--border-color); padding:8px 18px; border-radius:8px;" data-bs-dismiss="modal">Voltar</button>
+                <button type="button" style="background:var(--danger); color:#fff; border:none; padding:10px 24px; border-radius:var(--radius); cursor:pointer; font-weight:600; font-size:13px;" onclick="cancelTicket()">
+                    <i class="fas fa-times"></i> Encerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+@section Scripts {
+<script>
+    var allTickets = [];
+    var currentFilter = 'Todos';
+    var currentUserRole = '';
+    var currentUserId = '';
+
+    // Image preview
+    $('#ticketImageInput').on('change', function() {
+        var file = this.files[0];
+        if (file) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                $('#ticketImagePreview').html('<img src="' + e.target.result + '" style="max-width:100%; max-height:120px; border-radius:8px; border:1px solid var(--border-color);" />');
+            };
+            reader.readAsDataURL(file);
+        } else {
+            $('#ticketImagePreview').empty();
+        }
+    });
+
+    $(document).ready(function() {
+        checkAuth();
+        loadTickets();
+    });
+
+    function checkAuth() {
+        $.get('/api/auth/me').done(function(u) {
+            currentUserRole = u.role;
+            currentUserId = u.id;
+            var initials = u.displayName.split(' ').map(function(n){ return n[0]; }).join('').substring(0,2).toUpperCase();
+            $('#userAvatar').text(initials);
+            $('#userName').text(u.displayName);
+            var roleLabel = u.role === 'Tecnico' ? 'Técnico' : (u.role === 'Admin' ? 'Administrador' : 'Usuário');
+            $('#userRole').text(roleLabel);
+            if (u.role === 'Usuario') { $('#pageSubtitle').text('Seus chamados'); }
+        }).fail(function() {
+            window.location.href = '/';
+        });
+    }
+
+    function loadTickets() {
+        $.get('/api/tickets', function(data) {
+            allTickets = data;
+            updateStats();
+            renderTickets();
+        });
+    }
+
+    function updateStats() {
+        var total = allTickets.length;
+        var abertos = allTickets.filter(function(t){ return t.status === 'Aberto'; }).length;
+        var emAndamento = allTickets.filter(function(t){ return t.status === 'EmAndamento'; }).length;
+        var sla = allTickets.filter(function(t){ return t.slaBreached; }).length;
+        animateCounter('statTotal', total);
+        animateCounter('statAbertos', abertos);
+        animateCounter('statEmAndamento', emAndamento);
+        animateCounter('statSla', sla);
+    }
+
+    function animateCounter(id, target) {
+        var el = document.getElementById(id);
+        var current = parseInt(el.textContent) || 0;
+        if (current === target) return;
+        var step = target > current ? 1 : -1;
+        var interval = setInterval(function() {
+            current += step;
+            el.textContent = current;
+            if (current === target) clearInterval(interval);
+        }, 40);
+    }
+
+    function renderTickets() {
+        var filtered = currentFilter === 'Todos' ? allTickets : allTickets.filter(function(t){ return t.status === currentFilter; });
+        var tbody = $('#ticketsList');
+        tbody.empty();
+
+        if (filtered.length === 0) { $('#emptyState').show(); return; }
+        $('#emptyState').hide();
+
+        filtered.forEach(function(ticket) {
+            var rowClass = ticket.slaBreached ? 'sla-breached' : '';
+            var actionButtons = '';
+            var isTecOrAdmin = (currentUserRole === 'Tecnico' || currentUserRole === 'Admin');
+
+            if (ticket.status === 'Aberto') {
+                if (isTecOrAdmin) {
+                    actionButtons = '<button class="btn-sm-action btn-start" onclick="event.stopPropagation(); startTicket(\'' + ticket.id + '\')"><i class="fas fa-play"></i> Iniciar</button>';
+                }
+                actionButtons += ' <button class="btn-sm-action" style="background:var(--danger);" onclick="event.stopPropagation(); openCancelModal(\'' + ticket.id + '\')"><i class="fas fa-times"></i></button>';
+            } else if (ticket.status === 'EmAndamento') {
+                if (isTecOrAdmin) {
+                    actionButtons = '<button class="btn-sm-action btn-finish" onclick="event.stopPropagation(); openFinishModal(\'' + ticket.id + '\')"><i class="fas fa-check"></i> Finalizar</button>';
+                }
+                actionButtons += ' <button class="btn-sm-action" style="background:var(--danger);" onclick="event.stopPropagation(); openCancelModal(\'' + ticket.id + '\')"><i class="fas fa-times"></i></button>';
+            } else {
+                actionButtons = '<button class="btn-sm-action" style="background:var(--accent);" onclick="event.stopPropagation(); window.location.href=\'/ticket/' + ticket.id + '\'"><i class="fas fa-eye"></i></button>';
+            }
+
+            var finishedDate = ticket.finishedAt ? new Date(ticket.finishedAt).toLocaleString('pt-BR') : '—';
+            var statusBadge = getStatusBadge(ticket.status);
+            var priorityBadge = getPriorityBadge(ticket.priority);
+            var timeStr = ticket.totalTimeHours > 0 ? ticket.totalTimeHours + 'h' : '—';
+            var titleDisplay = ticket.title || 'Sem título';
+
+            tbody.append(
+                '<tr class="' + rowClass + '" style="cursor:pointer;" onclick="window.location.href=\'/ticket/' + ticket.id + '\'">' +
+                    '<td><strong style="color:var(--text-primary);">' + titleDisplay + '</strong><br><span style="font-family:monospace; font-size:10px; color:var(--text-muted);">' + ticket.id.substring(0,8) + '...</span></td>' +
+                    '<td>' + ticket.sector + '</td>' +
+                    '<td>' + priorityBadge + '</td>' +
+                    '<td>' + statusBadge + '</td>' +
+                    '<td style="font-size:12px;"><span style="color:var(--accent);">' + (ticket.createdByName || '—') + '</span></td>' +
+                    '<td style="font-size:12px; color:var(--text-secondary);">' + timeStr + '</td>' +
+                    '<td style="font-size:12px; color:var(--text-secondary);">' + finishedDate + '</td>' +
+                    '<td style="white-space:nowrap;">' + actionButtons + '</td>' +
+                '</tr>'
+            );
+        });
+    }
+
+    function getStatusBadge(status) {
+        var map = { 'Aberto': { cls: 'badge-aberto', label: 'Aberto' }, 'EmAndamento': { cls: 'badge-emandamento', label: 'Em Andamento' }, 'Finalizado': { cls: 'badge-finalizado', label: 'Finalizado' }, 'Cancelado': { cls: 'badge-cancelado', label: 'Cancelado' } };
+        var b = map[status] || { cls: 'badge-aberto', label: status };
+        return '<span class="badge-status ' + b.cls + '"><span class="dot"></span> ' + b.label + '</span>';
+    }
+
+    function getPriorityBadge(priority) {
+        var map = { 'Alta': { cls: 'badge-alta', icon: '▲' }, 'Média': { cls: 'badge-media', icon: '●' }, 'Baixa': { cls: 'badge-baixa', icon: '▼' } };
+        var b = map[priority] || { cls: 'badge-baixa', icon: '●' };
+        return '<span class="badge-priority ' + b.cls + '">' + b.icon + ' ' + priority + '</span>';
+    }
+
+    function filterBy(status, el) {
+        currentFilter = status;
+        $('.filter-chip').removeClass('active');
+        if (el) $(el).addClass('active'); else $('.filter-chip').first().addClass('active');
+        var titleMap = { 'Todos': 'Todos os Chamados', 'Aberto': 'Chamados Abertos', 'EmAndamento': 'Em Andamento', 'Finalizado': 'Finalizados', 'Cancelado': 'Cancelados' };
+        $('#sectionTitle').text(titleMap[status] || 'Chamados');
+        $('.sidebar nav a').removeClass('active');
+        renderTickets();
+    }
+
+    function createTicket() {
+        var title = $('#titleInput').val();
+        var sector = $('#sectorInput').val();
+        if (!title.trim()) { showToast('Informe o título', 'error'); return; }
+        if (!sector) { showToast('Selecione um setor', 'error'); return; }
+
+        var formData = new FormData();
+        formData.append('title', title);
+        formData.append('description', $('#descriptionInput').val());
+        formData.append('sector', sector);
+        formData.append('priority', $('#priorityInput').val());
+        var fileInput = document.getElementById('ticketImageInput');
+        if (fileInput.files[0]) { formData.append('image', fileInput.files[0]); }
+
+        $.ajax({ url: '/api/tickets', type: 'POST', data: formData, processData: false, contentType: false,
+            success: function() { $('#createTicketModal').modal('hide'); $('#createTicketForm')[0].reset(); $('#ticketImagePreview').empty(); showToast('Chamado criado!', 'success'); loadTickets(); },
+            error: function(xhr) { showToast(xhr.responseJSON ? xhr.responseJSON.erro : 'Erro', 'error'); }
+        });
+    }
+
+    function startTicket(id) {
+        $.ajax({ url: '/api/tickets/' + id + '/start', type: 'PUT',
+            success: function() { showToast('Atendimento iniciado!', 'info'); loadTickets(); },
+            error: function(xhr) { showToast(xhr.responseJSON ? xhr.responseJSON.erro : 'Erro', 'error'); }
+        });
+    }
+
+    function openFinishModal(id) { $('#finishTicketId').val(id); $('#solutionInput').val(''); $('#finishTicketModal').modal('show'); }
+
+    function finishTicket() {
+        var id = $('#finishTicketId').val();
+        var data = { solution: $('#solutionInput').val() };
+        if (!data.solution.trim()) { showToast('Informe a solução', 'error'); return; }
+        $.ajax({ url: '/api/tickets/' + id + '/finish', type: 'PUT', contentType: 'application/json', data: JSON.stringify(data),
+            success: function() { $('#finishTicketModal').modal('hide'); showToast('Chamado finalizado!', 'success'); loadTickets(); },
+            error: function(xhr) { showToast(xhr.responseJSON ? xhr.responseJSON.erro : 'Erro', 'error'); }
+        });
+    }
+
+    function openCancelModal(id) { $('#cancelTicketId').val(id); $('#cancelReasonInput').val(''); $('#cancelTicketModal').modal('show'); }
+
+    function cancelTicket() {
+        var id = $('#cancelTicketId').val();
+        var reason = $('#cancelReasonInput').val();
+        if (!reason.trim()) { showToast('Informe o motivo', 'error'); return; }
+        $.ajax({ url: '/api/tickets/' + id + '/cancel', type: 'PUT', contentType: 'application/json', data: JSON.stringify({ reason: reason }),
+            success: function() { $('#cancelTicketModal').modal('hide'); showToast('Chamado encerrado!', 'success'); loadTickets(); },
+            error: function(xhr) { showToast(xhr.responseJSON ? xhr.responseJSON.erro : 'Erro', 'error'); }
+        });
+    }
+
+    function doLogout() { $.post('/api/auth/logout').always(function() { window.location.href = '/'; }); }
+
+    function showToast(msg, type) {
+        var icon = type === 'success' ? 'check-circle' : (type === 'error' ? 'exclamation-circle' : 'info-circle');
+        var toast = $('<div class="toast-msg ' + type + '"><i class="fas fa-' + icon + '"></i> ' + msg + '</div>');
+        $('#toastContainer').append(toast);
+        setTimeout(function() { toast.fadeOut(300, function() { $(this).remove(); }); }, 3500);
+    }
+</script>
+}
