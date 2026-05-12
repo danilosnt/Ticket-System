@@ -61,12 +61,47 @@
             </button>
         </div>
 
-        <div class="filter-bar">
-            <button class="filter-chip active" onclick="filterBy('Todos', this)">Todos</button>
-            <button class="filter-chip" onclick="filterBy('Aberto', this)">Abertos</button>
-            <button class="filter-chip" onclick="filterBy('EmAndamento', this)">Em Andamento</button>
-            <button class="filter-chip" onclick="filterBy('Finalizado', this)">Finalizados</button>
-            <button class="filter-chip" onclick="filterBy('Cancelado', this)">Cancelados</button>
+        <div class="filter-bar-advanced">
+            <div class="filter-group">
+                <label><i class="fas fa-filter" style="margin-right:2px;"></i> Status</label>
+                <select id="filterStatus" onchange="applyFilters()">
+                    <option value="Todos">Todos</option>
+                    <option value="Aberto">Aberto</option>
+                    <option value="EmAndamento">Em Andamento</option>
+                    <option value="Finalizado">Finalizado</option>
+                    <option value="Cancelado">Cancelado</option>
+                </select>
+            </div>
+            <div class="filter-divider"></div>
+            <div class="filter-group">
+                <label><i class="fas fa-building" style="margin-right:2px;"></i> Setor</label>
+                <select id="filterSetor" onchange="applyFilters()">
+                    <option value="Todos">Todos</option>
+                    <option value="TI">TI</option>
+                    <option value="RH">RH</option>
+                    <option value="Financeiro">Financeiro</option>
+                    <option value="Comercial">Comercial</option>
+                    <option value="Suporte">Suporte</option>
+                    <option value="Infraestrutura">Infraestrutura</option>
+                </select>
+            </div>
+            <div class="filter-divider"></div>
+            <div class="filter-group">
+                <label><i class="fas fa-flag" style="margin-right:2px;"></i> Prioridade</label>
+                <select id="filterPrioridade" onchange="applyFilters()">
+                    <option value="Todos">Todas</option>
+                    <option value="Alta">🔴 Alta</option>
+                    <option value="Média">🟡 Média</option>
+                    <option value="Baixa">🟢 Baixa</option>
+                </select>
+            </div>
+            <div class="filter-divider"></div>
+            <button class="filter-chip-sla" id="filterSla" onclick="toggleSlaFilter()">
+                <i class="fas fa-exclamation-triangle"></i> SLA Estourado
+            </button>
+            <button class="btn-clear-filters" onclick="clearAllFilters()">
+                <i class="fas fa-times" style="margin-right:4px;"></i> Limpar Filtros
+            </button>
         </div>
 
         <div class="table-card">
@@ -208,9 +243,9 @@
 @section Scripts {
 <script>
     var allTickets = [];
-    var currentFilter = 'Todos';
     var currentUserRole = '';
     var currentUserId = '';
+    var slaFilterActive = false;
 
     // Image preview
     $('#ticketImageInput').on('change', function() {
@@ -277,8 +312,61 @@
         }, 40);
     }
 
+    function getFilteredTickets() {
+        var statusFilter = $('#filterStatus').val();
+        var setorFilter = $('#filterSetor').val();
+        var prioridadeFilter = $('#filterPrioridade').val();
+
+        var filtered = allTickets;
+
+        if (statusFilter !== 'Todos') {
+            filtered = filtered.filter(function(t) { return t.status === statusFilter; });
+        }
+        if (setorFilter !== 'Todos') {
+            filtered = filtered.filter(function(t) { return t.sector === setorFilter; });
+        }
+        if (prioridadeFilter !== 'Todos') {
+            filtered = filtered.filter(function(t) { return t.priority === prioridadeFilter; });
+        }
+        if (slaFilterActive) {
+            filtered = filtered.filter(function(t) { return t.slaBreached; });
+        }
+
+        return filtered;
+    }
+
+    function applyFilters() {
+        var statusFilter = $('#filterStatus').val();
+        var titleMap = { 'Todos': 'Todos os Chamados', 'Aberto': 'Chamados Abertos', 'EmAndamento': 'Em Andamento', 'Finalizado': 'Finalizados', 'Cancelado': 'Cancelados' };
+        $('#sectionTitle').text(titleMap[statusFilter] || 'Chamados');
+        $('.sidebar nav a').removeClass('active');
+        renderTickets();
+    }
+
+    function toggleSlaFilter() {
+        slaFilterActive = !slaFilterActive;
+        var btn = $('#filterSla');
+        if (slaFilterActive) {
+            btn.addClass('active');
+        } else {
+            btn.removeClass('active');
+        }
+        renderTickets();
+    }
+
+    function clearAllFilters() {
+        $('#filterStatus').val('Todos');
+        $('#filterSetor').val('Todos');
+        $('#filterPrioridade').val('Todos');
+        slaFilterActive = false;
+        $('#filterSla').removeClass('active');
+        $('#sectionTitle').text('Todos os Chamados');
+        $('.sidebar nav a').removeClass('active');
+        renderTickets();
+    }
+
     function renderTickets() {
-        var filtered = currentFilter === 'Todos' ? allTickets : allTickets.filter(function(t){ return t.status === currentFilter; });
+        var filtered = getFilteredTickets();
         var tbody = $('#ticketsList');
         tbody.empty();
 
@@ -307,12 +395,22 @@
             var finishedDate = ticket.finishedAt ? new Date(ticket.finishedAt).toLocaleString('pt-BR') : '—';
             var statusBadge = getStatusBadge(ticket.status);
             var priorityBadge = getPriorityBadge(ticket.priority);
-            var timeStr = ticket.totalTimeHours > 0 ? ticket.totalTimeHours + 'h' : '—';
+
+            // Enhanced time display with SLA indicator
+            var timeStr = '—';
+            if (ticket.totalTimeHours > 0) {
+                timeStr = ticket.totalTimeHours + 'h';
+                if (ticket.slaBreached) {
+                    timeStr = '<span class="sla-badge"><i class="fas fa-exclamation-triangle"></i> ' + ticket.totalTimeHours + 'h / ' + ticket.slaLimitHours + 'h</span>';
+                }
+            }
+
             var titleDisplay = ticket.title || 'Sem título';
+            var slaIcon = ticket.slaBreached ? ' <span class="sla-icon" title="SLA Estourado! Limite: ' + ticket.slaLimitHours + 'h"><i class="fas fa-fire"></i></span>' : '';
 
             tbody.append(
                 '<tr class="' + rowClass + '" style="cursor:pointer;" onclick="window.location.href=\'/ticket/' + ticket.id + '\'">' +
-                    '<td><strong style="color:var(--text-primary);">' + titleDisplay + '</strong><br><span style="font-family:monospace; font-size:10px; color:var(--text-muted);">' + ticket.id.substring(0,8) + '...</span></td>' +
+                    '<td><strong style="color:var(--text-primary);">' + titleDisplay + slaIcon + '</strong><br><span style="font-family:monospace; font-size:10px; color:var(--text-muted);">' + ticket.id.substring(0,8) + '...</span></td>' +
                     '<td>' + ticket.sector + '</td>' +
                     '<td>' + priorityBadge + '</td>' +
                     '<td>' + statusBadge + '</td>' +
@@ -338,13 +436,10 @@
     }
 
     function filterBy(status, el) {
-        currentFilter = status;
-        $('.filter-chip').removeClass('active');
-        if (el) $(el).addClass('active'); else $('.filter-chip').first().addClass('active');
-        var titleMap = { 'Todos': 'Todos os Chamados', 'Aberto': 'Chamados Abertos', 'EmAndamento': 'Em Andamento', 'Finalizado': 'Finalizados', 'Cancelado': 'Cancelados' };
-        $('#sectionTitle').text(titleMap[status] || 'Chamados');
-        $('.sidebar nav a').removeClass('active');
-        renderTickets();
+        $('#filterStatus').val(status);
+        slaFilterActive = false;
+        $('#filterSla').removeClass('active');
+        applyFilters();
     }
 
     function createTicket() {

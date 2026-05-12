@@ -375,10 +375,101 @@ body {
 .badge-baixa { background: rgba(16,185,129,.12); color: #34d399; }
 
 .sla-breached {
-    background: rgba(239,68,68,.06) !important;
+    background: rgba(239,68,68,.08) !important;
+    animation: slaFlash 3s ease-in-out infinite;
 }
 .sla-breached td:first-child {
-    box-shadow: inset 3px 0 0 var(--danger);
+    box-shadow: inset 4px 0 0 var(--danger);
+}
+.sla-breached:hover {
+    background: rgba(239,68,68,.14) !important;
+}
+@keyframes slaFlash {
+    0%, 100% { background: rgba(239,68,68,.06); }
+    50% { background: rgba(239,68,68,.12); }
+}
+.sla-icon {
+    display: inline-flex; align-items: center; gap: 4px;
+    color: var(--danger); font-size: 11px; font-weight: 700;
+    animation: slaPulse 1.5s ease-in-out infinite;
+}
+@keyframes slaPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: .6; transform: scale(1.1); }
+}
+.sla-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 6px;
+    font-size: 11px; font-weight: 700;
+    background: rgba(239,68,68,.15); color: #f87171;
+    border: 1px solid rgba(239,68,68,.25);
+}
+
+/* ── Advanced Filter Bar ───────────────── */
+.filter-bar-advanced {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    align-items: center; margin-bottom: 20px;
+}
+.filter-bar-advanced .filter-group {
+    display: flex; align-items: center; gap: 6px;
+}
+.filter-bar-advanced .filter-group label {
+    font-size: 11px; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: .5px; white-space: nowrap;
+}
+.filter-bar-advanced select {
+    padding: 7px 30px 7px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 500;
+    border: 1px solid var(--border-color);
+    background: var(--bg-input); color: var(--text-primary);
+    cursor: pointer; transition: var(--transition);
+    outline: none; font-family: inherit;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+}
+.filter-bar-advanced select:hover {
+    border-color: var(--border-hover);
+}
+.filter-bar-advanced select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.filter-bar-advanced select option {
+    background: var(--bg-secondary);
+}
+.filter-bar-advanced .filter-divider {
+    width: 1px; height: 24px;
+    background: var(--border-color);
+    margin: 0 4px;
+}
+.filter-bar-advanced .filter-chip-sla {
+    padding: 7px 16px; border-radius: 20px;
+    font-size: 12px; font-weight: 600;
+    border: 1px solid rgba(239,68,68,.3);
+    background: transparent; color: var(--danger);
+    cursor: pointer; transition: var(--transition);
+    display: inline-flex; align-items: center; gap: 6px;
+}
+.filter-bar-advanced .filter-chip-sla:hover {
+    background: rgba(239,68,68,.1);
+    border-color: var(--danger);
+}
+.filter-bar-advanced .filter-chip-sla.active {
+    background: var(--danger); border-color: var(--danger);
+    color: #fff;
+}
+.filter-bar-advanced .btn-clear-filters {
+    padding: 7px 14px; border-radius: 20px;
+    font-size: 11px; font-weight: 500;
+    border: 1px dashed var(--border-color);
+    background: transparent; color: var(--text-muted);
+    cursor: pointer; transition: var(--transition);
+    margin-left: auto;
+}
+.filter-bar-advanced .btn-clear-filters:hover {
+    border-color: var(--accent); color: var(--accent);
 }
 
 /* ── Modal Override ─────────────────────── */
