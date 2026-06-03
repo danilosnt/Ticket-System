@@ -1,55 +1,54 @@
-## Pré-requisitos
+## Prerequisites
 
-Para rodar este projeto na sua máquina, você precisa ter instalado:
-* **[SDK do .NET 10](https://dotnet.microsoft.com/download)** ou mais recente.
-* **[PostgreSQL](https://www.postgresql.org/download/)** no seu computador local.
-* Uma IDE como Visual Studio 2022/2026, ou Visual Studio Code.
-
+To run this project on your machine, you need to have installed:
+* **[SDK do .NET 10](https://dotnet.microsoft.com/download)** or newer.
+* **[PostgreSQL](https://www.postgresql.org/download/)** or your local computer.
+* An IDE such as Visual Studio 2022/2026, or Visual Studio Code.
 ---
 
-## Como configurar e rodar
+## How to configure and run
 
-1. **Clone o repositório** para a sua máquina:
+1. **Clone the repository to your machine:**
    ```bash
    git clone https://github.com/SEU_USUARIO/Ticket-System.git
    cd Ticket-System
    ```
 
-2. **Configure o Banco de Dados (PostgreSQL)**  
-   Abra o arquivo `appsettings.json` na raiz do projeto e certifique-se de que as informações de conexão do PostgreSQL (como sua senha de instalação) estão corretas. No exemplo de desenvolvimento a senha padrão é tida como `root`:
+2. **Configure the Database (PostgreSQL)**  
+   Open the `appsettings.json` file in the project root and make sure that the PostgreSQL connection information (such as your installation password) is correct. In the development example, the default password is set as `root`:
    ```json
    "ConnectionStrings": {
      "DefaultConnection": "Host=localhost;Port=5432;Database=ticket_system_db;Username=postgres;Password=SENHA"
    }
    ```
 
-3. **Restaure os pacotes e aplique o banco de dados**  
-   Abra o terminal (ou a aba de "Developer Command Prompt") na pasta raiz do projeto e execute:
+3. **Restore the packages and apply the database**  
+   Open the terminal (or the "Developer Command Prompt" tab) in the project's root folder and run:
    ```bash
    dotnet build
    dotnet ef database update
    ```
-   *(Obs: O projeto também contém uma rotina em no arquivo Program.cs para efetuar as migrações automaticamente quando o projeto inicia).*
+   *(Note: The project also contains a routine in the Program.cs file to perform migrations automatically when the project starts).*
 
-4. **Inicie o sistema**
+4. **Start the system**
    ```bash
    dotnet run
    ```
-   Ou simplesmente clique em **"Run / F5"** no seu Visual Studio.
+   Or simply click on "Run / F5" in your Visual Studio.
 
-5. **Acesse o Sistema:**  
-   Abra o seu navegador e acesse a URL que aparecerá no Console (ex: `https://localhost:7145`).
+5. **Acess the System:**  
+   Open your browser and access the URL that will appear in the Console (e.g., `https://localhost:7145`).
 
-6. **Passo Inicial (Administração):**
-   Ao iniciar o sistema pela primeira vez, o primeiro passo deve ser acessar o perfil de administrador. Faça o login com as credenciais padrão abaixo e proceda com a criação dos usuários iniciais que utilizarão o sistema:
-   * **Usuário:** `admin`
-   * **Senha:** `admin`
+6. **Initial Step (Administration):**
+   When starting the system for the first time, the first step must be to access the administrator profile. Log in with the default credentials below and proceed with creating the initial users who will use the system:
+   * **User:** `admin`
+   * **Password:** `admin`
 
 ---
 
-## Tecnologias Utilizadas
+## Technologies Used
 * C# .NET 10
 * ASP.NET Core MVC e Web API
 * Entity Framework Core (Code-First)
-* Banco de Dados PostgreSql
-* Bootstrap 5 (Front-end local) e jQuery
+* PostgreSQL Database
+* Bootstrap 5 (Front-end local) and jQuery
